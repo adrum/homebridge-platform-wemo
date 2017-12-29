@@ -481,7 +481,7 @@ WemoAccessory.prototype.observeDevice = function(device) {
                         this.updateSwitchState(value);
                     }
                     else if (this.accessory.getService(Service.GarageDoorOpener) !== undefined) {
-                        if (value == 1) {
+                        if (value == this.config.invertMakerSensorState ? 0 : 1) {
                             // Triggered through HomeKit
                             if (this.homekitTriggered === true) {
                                 delete this.homekitTriggered;
@@ -771,6 +771,8 @@ WemoAccessory.prototype.updateSensorState = function(state, wasTriggered) {
     }
     else if (this.accessory.getService(Service.GarageDoorOpener) !== undefined) {
         var targetDoorState = this.accessory.getService(Service.GarageDoorOpener).getCharacteristic(Characteristic.TargetDoorState);
+
+        if (this.config.invertMakerSensorState) value = !!value;
 
         if (targetDoorState.value == Characteristic.TargetDoorState.OPEN) {
             // Garage door's target state is OPEN and the garage door's current state is OPEN
