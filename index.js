@@ -773,7 +773,7 @@ WemoAccessory.prototype.updateSensorState = function(state, wasTriggered) {
     else if (this.accessory.getService(Service.GarageDoorOpener) !== undefined) {
         var targetDoorState = this.accessory.getService(Service.GarageDoorOpener).getCharacteristic(Characteristic.TargetDoorState);
 
-        if (invertMakerSensorState) value = !!value;
+        if (invertMakerSensorState) value = !value;
 
         if (targetDoorState.value == Characteristic.TargetDoorState.OPEN) {
             // Garage door's target state is OPEN and the garage door's current state is OPEN
