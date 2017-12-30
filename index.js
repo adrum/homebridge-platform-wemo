@@ -25,7 +25,7 @@ var Wemo  = require('wemo-client'),
 var Accessory, Characteristic, Consumption, Service, TotalConsumption, UUIDGen;
 var wemo = new Wemo();
 
-var doorOpenTimer, noMotionTimer, invertMakerSensorState;
+var doorOpenTimer, noMotionTimer, invertGarageSensorState;
 
 module.exports = function (homebridge) {
     Accessory = homebridge.platformAccessory;
@@ -97,7 +97,7 @@ function WemoPlatform(log, config, api) {
 
     doorOpenTimer = this.config.doorOpenTimer || DEFAULT_DOOR_OPEN_TIME;
     noMotionTimer = this.config.noMotionTimer || this.config.no_motion_timer || DEFAULT_NO_MOTION_TIME;
-    invertMakerSensorState = this.config.invertMakerSensorState || false;
+    invertGarageSensorState = this.config.invertGarageSensorState || false;
 
     var addDiscoveredDevice = function(err, device) {
         if (!device) {
@@ -482,7 +482,7 @@ WemoAccessory.prototype.observeDevice = function(device) {
                         this.updateSwitchState(value);
                     }
                     else if (this.accessory.getService(Service.GarageDoorOpener) !== undefined) {
-                        if (value == invertMakerSensorState ? 0 : 1) {
+                        if (value == invertGarageSensorState ? 0 : 1) {
                             // Triggered through HomeKit
                             if (this.homekitTriggered === true) {
                                 delete this.homekitTriggered;
@@ -773,11 +773,11 @@ WemoAccessory.prototype.updateSensorState = function(state, wasTriggered) {
     else if (this.accessory.getService(Service.GarageDoorOpener) !== undefined) {
         var targetDoorState = this.accessory.getService(Service.GarageDoorOpener).getCharacteristic(Characteristic.TargetDoorState);
 
-        if (invertMakerSensorState) value = !value;
+        if (invertGarageSensorState) value = !value;
 
         if (targetDoorState.value == Characteristic.TargetDoorState.OPEN) {
 
-            if (invertMakerSensorState) {
+            if (invertGarageSensorState) {
 
                  // Garage door's target state is OPEN and the garage door's current state is OPEN
                  if (value == Characteristic.CurrentDoorState.OPEN) {
@@ -821,7 +821,7 @@ WemoAccessory.prototype.updateSensorState = function(state, wasTriggered) {
             }
         }
         else if (targetDoorState.value == Characteristic.TargetDoorState.CLOSED) {
-            if (invertMakerSensorState) {
+            if (invertGarageSensorState) {
 
                 // Garage door's target state is CLOSED and the garage door's current state is CLOSED
                 if (value == Characteristic.CurrentDoorState.CLOSED) {
