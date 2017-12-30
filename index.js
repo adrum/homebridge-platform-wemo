@@ -25,7 +25,7 @@ var Wemo  = require('wemo-client'),
 var Accessory, Characteristic, Consumption, Service, TotalConsumption, UUIDGen;
 var wemo = new Wemo();
 
-var doorOpenTimer, noMotionTimer;
+var doorOpenTimer, noMotionTimer, invertMakerSensorState;
 
 module.exports = function (homebridge) {
     Accessory = homebridge.platformAccessory;
@@ -97,6 +97,7 @@ function WemoPlatform(log, config, api) {
 
     doorOpenTimer = this.config.doorOpenTimer || DEFAULT_DOOR_OPEN_TIME;
     noMotionTimer = this.config.noMotionTimer || this.config.no_motion_timer || DEFAULT_NO_MOTION_TIME;
+    invertMakerSensorState = this.config.invertMakerSensorState || false;
 
     var addDiscoveredDevice = function(err, device) {
         if (!device) {
@@ -481,13 +482,13 @@ WemoAccessory.prototype.observeDevice = function(device) {
                         this.updateSwitchState(value);
                     }
                     else if (this.accessory.getService(Service.GarageDoorOpener) !== undefined) {
-                        if (value == this.config.invertMakerSensorState ? 0 : 1) {
+                        if (value == invertMakerSensorState ? 0 : 1) {
                             // Triggered through HomeKit
                             if (this.homekitTriggered === true) {
                                 delete this.homekitTriggered;
                             }
                             // Triggered using the button on the WeMo Maker
-                            else {                                
+                            else {
                                 var targetDoorState = this.accessory.getService(Service.GarageDoorOpener).getCharacteristic(Characteristic.TargetDoorState);
                                 var state = targetDoorState.value ? Characteristic.TargetDoorState.OPEN : Characteristic.TargetDoorState.CLOSED;
                                 this.log("%s - Set Target Door State: %s (triggered by Maker)", this.accessory.displayName, (state ? "Closed" : "Open"));
@@ -772,7 +773,7 @@ WemoAccessory.prototype.updateSensorState = function(state, wasTriggered) {
     else if (this.accessory.getService(Service.GarageDoorOpener) !== undefined) {
         var targetDoorState = this.accessory.getService(Service.GarageDoorOpener).getCharacteristic(Characteristic.TargetDoorState);
 
-        if (this.config.invertMakerSensorState) value = !!value;
+        if (invertMakerSensorState) value = !!value;
 
         if (targetDoorState.value == Characteristic.TargetDoorState.OPEN) {
             // Garage door's target state is OPEN and the garage door's current state is OPEN
