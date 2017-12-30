@@ -776,44 +776,92 @@ WemoAccessory.prototype.updateSensorState = function(state, wasTriggered) {
         if (invertMakerSensorState) value = !value;
 
         if (targetDoorState.value == Characteristic.TargetDoorState.OPEN) {
-            // Garage door's target state is OPEN and the garage door's current state is OPEN
-            if (value == Characteristic.CurrentDoorState.OPEN) {
-                if (this.isMoving !== true) {
+
+            if (invertMakerSensorState) {
+
+                 // Garage door's target state is OPEN and the garage door's current state is OPEN
+                 if (value == Characteristic.CurrentDoorState.OPEN) {
+                    delete this.isMoving;
+                    if (this.movingTimer) {
+                        clearTimeout(this.movingTimer);
+                        delete this.movingTimer;
+                    }
+
                     this.updateCurrentDoorState(Characteristic.CurrentDoorState.OPEN, true);
                 }
-                else {
-                    this.updateCurrentDoorState(Characteristic.CurrentDoorState.OPENING, true);
+                // Garage door's target state is OPEN, but the garage door's current state is CLOSED,
+                // it must have been triggered externally by a remote control
+                else if (value == Characteristic.CurrentDoorState.CLOSED) {
+                    this.log("%s - Set Target Door State: CLOSED (triggered by External)", this.accessory.displayName);
+                    targetDoorState.updateValue(Characteristic.TargetDoorState.CLOSED);
+
+                    if (wasTriggered === true) {
+                        this.setDoorMoving(Characteristic.TargetDoorState.CLOSED);
+                    }
                 }
-            }
-            // Garage door's target state is OPEN, but the garage door's current state is CLOSED,
-            // it must have been triggered externally by a remote control
-            else if (value == Characteristic.CurrentDoorState.CLOSED) {
-                this.log("%s - Set Target Door State: Closed (triggered by External)", this.accessory.displayName);
-                delete this.isMoving;
-                targetDoorState.updateValue(Characteristic.TargetDoorState.CLOSED);
-                this.updateCurrentDoorState(Characteristic.CurrentDoorState.CLOSED, true);
+
+            } else {
+                // Garage door's target state is OPEN and the garage door's current state is OPEN
+                if (value == Characteristic.CurrentDoorState.OPEN) {
+                    if (this.isMoving !== true) {
+                        this.updateCurrentDoorState(Characteristic.CurrentDoorState.OPEN, true);
+                    }
+                    else {
+                        this.updateCurrentDoorState(Characteristic.CurrentDoorState.OPENING, true);
+                    }
+                }
+                // Garage door's target state is OPEN, but the garage door's current state is CLOSED,
+                // it must have been triggered externally by a remote control
+                else if (value == Characteristic.CurrentDoorState.CLOSED) {
+                    this.log("%s - Set Target Door State: Closed (triggered by External)", this.accessory.displayName);
+                    delete this.isMoving;
+                    targetDoorState.updateValue(Characteristic.TargetDoorState.CLOSED);
+                    this.updateCurrentDoorState(Characteristic.CurrentDoorState.CLOSED, true);
+                }
             }
         }
         else if (targetDoorState.value == Characteristic.TargetDoorState.CLOSED) {
-            // Garage door's target state is CLOSED and the garage door's current state is CLOSED
-            if (value == Characteristic.CurrentDoorState.CLOSED) {
-                delete this.isMoving;
+            if (invertMakerSensorState) {
 
-                if (this.movingTimer) {
-                    clearTimeout(this.movingTimer);
-                    delete this.movingTimer;
+                // Garage door's target state is CLOSED and the garage door's current state is CLOSED
+                if (value == Characteristic.CurrentDoorState.CLOSED) {
+                    if (this.isMoving !== true) {
+                        this.updateCurrentDoorState(Characteristic.CurrentDoorState.CLOSED, true);
+                    }
+                    else {
+                        this.updateCurrentDoorState(Characteristic.CurrentDoorState.CLOSING, true);
+                    }
+                }
+                // Garage door's target state is CLOSED, but the garage door's current state is OPEN,
+                // it must have been triggered externally by a remote control
+                else if (value == Characteristic.CurrentDoorState.OPEN) {
+                    this.log("%s - Set Target Door State: Closed (triggered by External)", this.accessory.displayName);
+                    delete this.isMoving;
+                    targetDoorState.updateValue(Characteristic.TargetDoorState.OPEN);
+                    this.updateCurrentDoorState(Characteristic.CurrentDoorState.OPEN, true);
                 }
 
-                this.updateCurrentDoorState(Characteristic.CurrentDoorState.CLOSED, true);
-            }
-            // Garage door's target state is CLOSED, but the garage door's current state is OPEN,
-            // it must have been triggered externally by a remote control
-            else if (value == Characteristic.CurrentDoorState.OPEN) {
-                this.log("%s - Set Target Door State: Open (triggered by External)", this.accessory.displayName);
-                targetDoorState.updateValue(Characteristic.TargetDoorState.OPEN);
+            } else {
 
-                if (wasTriggered === true) {
-                    this.setDoorMoving(Characteristic.TargetDoorState.OPEN);
+                // Garage door's target state is CLOSED and the garage door's current state is CLOSED
+                if (value == Characteristic.CurrentDoorState.CLOSED) {
+                    delete this.isMoving;
+                    if (this.movingTimer) {
+                        clearTimeout(this.movingTimer);
+                        delete this.movingTimer;
+                    }
+
+                    this.updateCurrentDoorState(Characteristic.CurrentDoorState.CLOSED, true);
+                }
+                // Garage door's target state is CLOSED, but the garage door's current state is OPEN,
+                // it must have been triggered externally by a remote control
+                else if (value == Characteristic.CurrentDoorState.OPEN) {
+                    this.log("%s - Set Target Door State: Open (triggered by External)", this.accessory.displayName);
+                    targetDoorState.updateValue(Characteristic.TargetDoorState.OPEN);
+
+                    if (wasTriggered === true) {
+                        this.setDoorMoving(Characteristic.TargetDoorState.OPEN);
+                    }
                 }
             }
         }
